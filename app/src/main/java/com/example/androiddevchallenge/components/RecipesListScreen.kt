@@ -1,23 +1,32 @@
 package com.example.androiddevchallenge.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.DraggableState
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.androiddevchallenge.model.ItemState
 import com.example.androiddevchallenge.model.Recipe
@@ -26,10 +35,12 @@ import com.example.androiddevchallenge.model.RecipesListViewModel
 import com.example.androiddevchallenge.model.State
 import com.example.androiddevchallenge.ui.theme.DarkGray
 import com.example.androiddevchallenge.ui.theme.MyTheme
+import kotlin.math.roundToInt
 
 /**
  * Main task screen composable
  */
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun RecipesListScreen(viewModel: RecipesListViewModel = RecipesListViewModel()) {
     val uiStateModel: UiStateModel by viewModel.uiStateModel.observeAsState(
@@ -39,6 +50,10 @@ fun RecipesListScreen(viewModel: RecipesListViewModel = RecipesListViewModel()) 
         )
     )
     Column {
+        ColorFilter(onClick = {
+            viewModel.onFilterByColor(it)
+        })
+
         if (uiStateModel.isEmpty()) {
             EmptyView(Modifier.weight(1f))
         } else {
@@ -56,6 +71,7 @@ fun RecipesListScreen(viewModel: RecipesListViewModel = RecipesListViewModel()) 
 /**
  * Displays list of recipes
  */
+@ExperimentalMaterialApi
 @Composable
 fun RecipeListView(
     list: List<ItemState>,
@@ -69,7 +85,21 @@ fun RecipeListView(
     ) {
         items(list) { item ->
             if (item.state == State.RECIPE) {
-                RecipeCard(item.recipe, onLongClick)
+                val dismissState = rememberDismissState(
+                    confirmStateChange = {
+                        if (it != DismissValue.DismissedToStart) {
+                            onLongClick(item.recipe.id)
+                        }
+                        it == DismissValue.DismissedToEnd
+                    }
+                )
+                SwipeToDismiss(
+                    state = dismissState,
+                    background = {},
+                    directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
+                    dismissContent = { RecipeCard(item.recipe, onLongClick) }
+                )
+
             } else {
                 ConfirmDeletionCard(
                     item.recipe,
@@ -104,6 +134,7 @@ fun AddButton(onClick: () -> Unit) {
 /**
  * Card which displays a recipe with name, color and price
  */
+@ExperimentalMaterialApi
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RecipeCard(recipe: Recipe, onLongClick: (Int) -> Unit = {}) {
@@ -196,7 +227,7 @@ fun ColorView(color: Color, modifier: Modifier) {
  * Use this view for Bonus task
  */
 @Composable
-fun ColorFilter() {
+fun ColorFilter(onClick: (Color) -> Unit) {
     Row(
         Modifier
             .background(DarkGray)
@@ -204,19 +235,23 @@ fun ColorFilter() {
     ) {
         Spacer(modifier = Modifier.weight(1f))
         RecipesDataGenerator.colors.forEach { color ->
-            ColorView3(color = color)
+            ColorView3(color = color, onClick = onClick)
             Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ColorView3(color: Color, modifier: Modifier = Modifier) {
+fun ColorView3(color: Color, modifier: Modifier = Modifier, onClick: (Color) -> Unit) {
     Spacer(
         modifier = modifier
             .width(64.dp)
             .height(24.dp)
             .background(color, shape = RoundedCornerShape(12.dp))
+            .combinedClickable(
+                onClick = { onClick(color) }
+            )
     )
 }
 
@@ -224,10 +259,11 @@ fun ColorView3(color: Color, modifier: Modifier = Modifier) {
 @Composable
 fun BonusComponentsReview() {
     MyTheme {
-        ColorFilter()
+        ColorFilter(onClick = {})
     }
 }
 
+@ExperimentalMaterialApi
 @Preview
 @Composable
 fun ComponentsPreview() {

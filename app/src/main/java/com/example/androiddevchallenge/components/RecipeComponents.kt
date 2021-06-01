@@ -1,5 +1,6 @@
 package com.example.androiddevchallenge.components
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -62,20 +63,27 @@ fun RecipePrice(
 /**
  * Static box with Price + Button
  */
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun BottomView(totalPrice: Double, onAddRecipeClick: () -> Unit) {
     Column {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+        AnimatedVisibility(
+            visible = totalPrice > 0.0,
+            enter = fadeIn() + slideInHorizontally(),
+            exit = fadeOut() + slideOutHorizontally()
         ) {
-            Text(
-                text = "Total price",
-                modifier = Modifier.weight(1f),
-                color = MaterialTheme.colors.onSurface
-            )
-            Text(text = "$ $totalPrice", color = MaterialTheme.colors.onSurface)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Total price",
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colors.onSurface
+                )
+                Text(text = "$ $totalPrice", color = MaterialTheme.colors.onSurface)
+            }
         }
         AddButton(onAddRecipeClick)
     }
