@@ -19,9 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.androiddevchallenge.model.ItemState
 import com.example.androiddevchallenge.model.Recipe
 import com.example.androiddevchallenge.model.RecipesDataGenerator
 import com.example.androiddevchallenge.model.RecipesListViewModel
+import com.example.androiddevchallenge.model.State
 import com.example.androiddevchallenge.ui.theme.DarkGray
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
@@ -30,15 +32,24 @@ import com.example.androiddevchallenge.ui.theme.MyTheme
  */
 @Composable
 fun RecipesListScreen(viewModel: RecipesListViewModel = RecipesListViewModel()) {
-    val uiModel: UiModel by viewModel.uiModel.observeAsState(UiModel(emptyList(), 0.0))
+    val uiStateModel: UiStateModel by viewModel.uiStateModel.observeAsState(
+        UiStateModel(
+            emptyList(),
+            0.0
+        )
+    )
     Column {
-        if (uiModel.isEmpty()) {
+        if (uiStateModel.isEmpty()) {
             EmptyView(Modifier.weight(1f))
         } else {
-            RecipeListView(uiModel.list, Modifier.weight(1f))
+            RecipeListView(uiStateModel.list, Modifier.weight(1f),
+                onLongClick = { viewModel.onRecipeLongClick(it) },
+                onYesClick = { viewModel.onRecipeDelete(it) },
+                onNoClick = { viewModel.onRecipeReset(it) }
+            )
         }
 
-        BottomView(uiModel.totalPrice) { viewModel.onAddRecipeClick() }
+        BottomView(uiStateModel.totalPrice) { viewModel.onAddRecipeClick() }
     }
 }
 
@@ -46,18 +57,24 @@ fun RecipesListScreen(viewModel: RecipesListViewModel = RecipesListViewModel()) 
  * Displays list of recipes
  */
 @Composable
-fun RecipeListView(list: List<Recipe>, modifier: Modifier) {
+fun RecipeListView(
+    list: List<ItemState>,
+    modifier: Modifier,
+    onLongClick: (Int) -> Unit,
+    onYesClick: (Int) -> Unit,
+    onNoClick: (Int) -> Unit
+) {
     LazyColumn(
         modifier = modifier.background(DarkGray)
     ) {
-        items(list) {
-            if (state == Recipe) {
-                RecipeCard(it)
+        items(list) { item ->
+            if (item.state == State.RECIPE) {
+                RecipeCard(item.recipe, onLongClick)
             } else {
                 ConfirmDeletionCard(
-                    it.id,
-                    onYesClick = {},
-                    onNoClick = {}
+                    item.recipe,
+                    onYesClick = onYesClick,
+                    onNoClick = onNoClick
                 )
             }
             Spacer(
@@ -68,12 +85,6 @@ fun RecipeListView(list: List<Recipe>, modifier: Modifier) {
         }
     }
 }
-
-State {
-    Recipe(recipe)
-    Confirmation
-}
-
 
 /**
  * Draws an "Add" button
@@ -95,13 +106,13 @@ fun AddButton(onClick: () -> Unit) {
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RecipeCard(recipe: Recipe, onLongClick: () -> Unit = {}) {
+fun RecipeCard(recipe: Recipe, onLongClick: (Int) -> Unit = {}) {
     Card(
         Modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
             .combinedClickable(
-                onLongClick = onLongClick,
+                onLongClick = { onLongClick(recipe.id) },
                 onClick = {}
             )
     ) {
@@ -128,7 +139,11 @@ fun RecipeCard(recipe: Recipe, onLongClick: () -> Unit = {}) {
  * Card which shows a request to remove a particular recipe from the list
  */
 @Composable
-fun ConfirmDeletionCard(recipeToDelete: Recipe, onYesClick: (Int) -> Unit = {}, onNoClick: () -> Unit = {}) {
+fun ConfirmDeletionCard(
+    recipeToDelete: Recipe,
+    onYesClick: (Int) -> Unit = {},
+    onNoClick: (Int) -> Unit = {}
+) {
     Card(
         Modifier
             .fillMaxWidth()
@@ -155,7 +170,7 @@ fun ConfirmDeletionCard(recipeToDelete: Recipe, onYesClick: (Int) -> Unit = {}, 
                     onYesClick(recipeToDelete.id)
                 }
                 ConfirmationButton(text = "No", modifier = weightModifier) {
-                    onNoClick()
+                    onNoClick(recipeToDelete.id)
                 }
             }
         }
@@ -216,12 +231,13 @@ fun BonusComponentsReview() {
 @Preview
 @Composable
 fun ComponentsPreview() {
+    val recipe = RecipesDataGenerator.generateRecipes(1).first()
     MyTheme {
         Surface {
             Column {
-                RecipeCard(RecipesDataGenerator.generateRecipes(1).first())
+                RecipeCard(recipe)
                 Spacer(modifier = Modifier.size(8.dp))
-                ConfirmDeletionCard()
+                ConfirmDeletionCard(recipe, onYesClick = {}, onNoClick = {})
             }
         }
     }

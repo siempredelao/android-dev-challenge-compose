@@ -22,8 +22,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.androiddevchallenge.components.RecipesListScreen
-import com.example.androiddevchallenge.components.UiModel
-import com.example.androiddevchallenge.model.RecipesDataGenerator
 import com.example.androiddevchallenge.model.RecipesListViewModel
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
