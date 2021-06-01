@@ -13,7 +13,7 @@ object RecipesDataGenerator {
 
     fun generateRecipes(number: Int): MutableList<Recipe> {
         val list = mutableListOf<Recipe>()
-        for (i in 0..number) {
+        for (i in 1..number) {
             list += Recipe(name = names.random(), price = randomPrice, color = randomColor)
         }
         return list

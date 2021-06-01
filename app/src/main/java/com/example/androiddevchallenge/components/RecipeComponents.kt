@@ -63,7 +63,7 @@ fun RecipePrice(
  * Static box with Price + Button
  */
 @Composable
-fun BottomView() {
+fun BottomView(totalPrice: Double, onAddRecipeClick: () -> Unit) {
     Column {
         Row(
             Modifier
@@ -75,9 +75,9 @@ fun BottomView() {
                 modifier = Modifier.weight(1f),
                 color = MaterialTheme.colors.onSurface
             )
-            Text(text = "$ X", color = MaterialTheme.colors.onSurface)
+            Text(text = "$ $totalPrice", color = MaterialTheme.colors.onSurface)
         }
-        AddButton()
+        AddButton(onAddRecipeClick)
     }
 
 }
@@ -125,7 +125,7 @@ fun ComponentsPreview2() {
                 RecipePrice(recipe = recipe)
                 RecipeName(recipe = recipe)
                 VerticalDivider(modifier = Modifier.padding(16.dp))
-                BottomView()
+                BottomView(3.05, { })
             }
         }
     }
